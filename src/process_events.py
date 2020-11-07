@@ -319,13 +319,12 @@ def event_HT_tracking(event_num):
                 sectors.append(sector)
                 coll_indicies.append(colls)
               
-    
     ## Consider each found_sector for tracking
         
     event_results = []
                 
     for num in range(len(found_sectors)):
-            
+                
         #time0 = time.time()
         
         #print('Sector', num+1, 'of', len(found_sectors))
@@ -349,7 +348,7 @@ def event_HT_tracking(event_num):
                     hashIds.append(coll.hashId)
                     if hit_info[1] != -1:
                         columns.append(hit_info[1])
-            
+
         ## need the condition here that there is at least one hit in 7 different layers, otherwise no point proceeding.  
         ## allocate each hit to a layer
         
@@ -394,8 +393,38 @@ def event_HT_tracking(event_num):
                 #plt.imshow(histo)
                 #plt.colorbar()
                 #print('max = ' + str(histo.max()))
-                
                 event_results.append([event_num, sector_index, histo])
+
+            else:
+
+                col = int(not col)
+                col_info = sector_info[sector_info.col == col].drop('col', axis=1)
+                
+                if len(col_info) > 0:
+
+                
+		    layer_widths_col = layer_widths_full[layer_widths_full.col == col].drop(
+		    'col', axis=1).drop('sector_index', axis=1).values[0]
+		    
+		    mean_pattern = col_info.iloc[0,:].values
+		    eigen1 = col_info.iloc[1,:].values
+		    eigen2 = col_info.iloc[2,:].values
+		    eigen1_true = [x/100 for x in eigen1]
+		    eigen2_true = [x/100 for x in eigen2]
+		    eigenpatterns = [eigen1_true, eigen2_true]     
+		    
+		    histo, lines, votes = hough_transform_PIL(hits, layer_list, mean_pattern, eigenpatterns, layer_widths_col)
+
+		    #plt.imshow(histo)
+		    #plt.colorbar()
+			
+		    for i in range(iterations):
+	                histo, votes = update_votes(histo, lines, votes, t1, t2)
+			
+		    #plt.imshow(histo)
+		    #plt.colorbar()
+		    #print('max = ' + str(histo.max()))
+		    event_results.append([event_num, sector_index, histo])
              
         #time1 = time.time()
         #print('sector time =', time1-time0)
